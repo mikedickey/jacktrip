@@ -53,9 +53,10 @@ using std::cout; using std::endl;
 
 
 //*******************************************************************************
-UdpMasterListener::UdpMasterListener(int server_port) :
+UdpMasterListener::UdpMasterListener(int server_port, int server_udp_port) :
     //mJTWorker(NULL),
-    mServerPort(server_port),
+    mServerPort(server_port), //initial TCP & UDP port
+    mServerUdpPort(server_udp_port), //final UDP port
     mStopped(false),
     #ifdef WAIR // wair
     mWAIR(false),
@@ -83,9 +84,12 @@ UdpMasterListener::UdpMasterListener(int server_port) :
     // mBasePort = ( rand() % ( (65535 - gMaxThreads) - 49152 ) ) + 49152;
 
     // SoundWIRE ports open are UDP 61000-62000
+    if (mServerUdpPort != NULL) {
+      mBasePort = mServerUdpPort;
+    } else { 
     // (server_port - gDefaultPort) apply TCP offset to UDP too
-    mBasePort = 61000 + (server_port - gDefaultPort);
-
+      mBasePort = 61000 + (server_port - gDefaultPort);
+    }
     mUnderRunMode = JackTrip::WAVETABLE;
     mBufferQueueLength = gDefaultQueueLength;
     cout << "@@@@@@@@@ UdpMasterListener Constructed" << endl;
@@ -156,7 +160,7 @@ void UdpMasterListener::run()
             // ------------------------
             peer_udp_port = readClientUdpPort(clientConnection);
             if ( peer_udp_port == 0 ) { break; }
-            cout << "JackTrip HUB SERVER: Client UDP Port is = " << peer_udp_port << endl;
+            cout << "JackTrip HUB SERVER: Client Initial UDP Port is = " << peer_udp_port << endl;
 
             // Check is client is new or not
             // -----------------------------
@@ -180,9 +184,9 @@ void UdpMasterListener::run()
                 //id = isNewAddress(PeerAddress.toIPv4Address(), peer_udp_port);
                 id = getPoolID(PeerAddress.toString(), peer_udp_port);
             }
-            // Assign server port and send it to Client
+            // Assign server port and send it to Client--final client side udp port assigned by server
             server_udp_port = mBasePort+id;
-            cout << "&&&& JackTrip HUB SERVER: server udp port " << server_udp_port << endl;
+            cout << "JackTrip HUB SERVER: final client udp port assigned by server " << server_udp_port << endl;
             if ( sendUdpPort(clientConnection, server_udp_port) == 0 ) {
                 clientConnection->close();
                 delete clientConnection;

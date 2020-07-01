@@ -68,6 +68,7 @@ Settings::Settings() :
     mBufferQueueLength(gDefaultQueueLength),
     mAudioBitResolution(AudioInterface::BIT16),
     mBindPortNum(gDefaultPort), mPeerPortNum(gDefaultPort),
+    mServerUdpPortNum(NULL),
     mClientName(NULL),
     mUnderrrunZero(false),
     mLoopBack(false),
@@ -153,7 +154,7 @@ void Settings::parseInput(int argc, char** argv)
     /// \todo Specify mandatory arguments
     int ch;
     while ( (ch = getopt_long(argc, argv,
-                              "n:N:H:sc:SC:o:B:P:q:r:b:zlwjeJ:RTd:F:p:DvVh", longopts, NULL)) != -1 )
+                              "n:N:H:sc:SC:o:B:P:U:q:r:b:zlwjeJ:RTd:F:p:DvVh", longopts, NULL)) != -1 )
         switch (ch) {
 
         case 'n': // Number of input and output channels
@@ -209,6 +210,10 @@ void Settings::parseInput(int argc, char** argv)
         case 'P': // Peer Port
             //-------------------------------------------------------
             mPeerPortNum = atoi(optarg);
+            break;
+        case 'U': // UDP Bind Port
+            //-------------------------------------------------------
+            mServerUdpPortNum = atoi(optarg);
             break;
         case 'b':
             //-------------------------------------------------------
@@ -432,11 +437,10 @@ void Settings::printUsage()
 //*******************************************************************************
 void Settings::startJackTrip()
 {
-    cout << "$$$$$$$ mJackTripServer " << mJackTripServer << endl;
     cout << "%%%%%%% right before Server case UdpMasterListener mBindPortNum: " << mBindPortNum << endl;
     /// \todo Change this, just here to test
     if ( mJackTripServer ) {
-        UdpMasterListener* udpmaster = new UdpMasterListener(mBindPortNum);
+        UdpMasterListener* udpmaster = new UdpMasterListener(mBindPortNum, mServerUdpPortNum);
         udpmaster->setSettings(this);
 #ifdef WAIR // WAIR
         udpmaster->setWAIR(mWAIR);
